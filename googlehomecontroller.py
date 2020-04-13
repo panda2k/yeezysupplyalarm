@@ -25,4 +25,3 @@ def play_music(song_uri):
     speaker.set_volume(0.5)
     client.start_playback(device_id=device_id, uris=[song_uri])
 
-play_music('spotify:track:49fT6owWuknekShh9utsjv')
