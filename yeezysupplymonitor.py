@@ -22,7 +22,7 @@ import googlehomecontroller
 class YeezySupplyMonitor:
     def check_product_availbility(self, sku):
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0'} # required for headless chrome to work on yeezy supply
-        url = (f'https://www.yeezysupply.com/api/products/{sku}/availability')
+        url = f'https://www.yeezysupply.com/api/products/{sku}/availability'
         response = requests.get(url, headers=headers)
         if response.headers['content-type'].find('application/json') == -1: # check to make sure response is JSON
             logging.debug('Product not found')
