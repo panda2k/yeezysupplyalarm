@@ -40,7 +40,7 @@ class YeezySupplyMonitor:
         while self.check_product_availbility(sku) == False:
             time.sleep(monitor_delay)
         logging.debug('Triggering alarm')
-        wakeup_alarm()
+        self.wakeup_alarm()
 
     def wakeup_alarm(self):
         googlehomecontroller.play_music('spotify:track:49fT6owWuknekShh9utsjv')
