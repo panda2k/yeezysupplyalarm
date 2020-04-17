@@ -4,6 +4,8 @@ from datetime import datetime
 import json
 import requests
 import time
+import threading
+import ctypes
 
 log_path = os.path.join(os.getcwd(), "logs/")
 if os.path.isdir(log_path) == False:
@@ -19,27 +21,46 @@ logging.basicConfig(
 import googlehomecontroller
 
 
-class YeezySupplyMonitor:
+class YeezySupplyMonitor(threading.Thread):
+    def __init__(self, sku, delay):
+        self.sku = sku
+        self.delay = delay
+        super(YeezySupplyMonitor, self).__init__()
+    
+    def run(self):
+        logging.info(f'Started monitoring SKU {self.sku}')
+        self.monitor_site(self.sku, self.delay)
+    
+    def stop(self):
+        thread_id = threading.get_ident()
+        stopping_result = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, ctypes.py_object(SystemExit))
+        if stopping_result > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            logging.error(f'Failed to stop thread {thread_id}')
+        else:
+            logging.info(f'Stopped thread {thread_id}')
+
+
     def check_product_availbility(self, sku):
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0'} # required for headless chrome to work on yeezy supply
         url = f'https://www.yeezysupply.com/api/products/{sku}/availability'
         response = requests.get(url, headers=headers)
         if response.headers['content-type'].find('application/json') == -1: # check to make sure response is JSON
-            logging.debug('Product not found')
+            logging.info(f'{sku} not found')
             return False
         product = json.loads(response.content)
         logging.debug(product)
         if product['availability_status'] != 'PREVIEW': # If product is JSON, check product status
-            logging.debug('Product available')
+            logging.info(f'{sku} available')
             return True
         else: 
-            logging.debug('Product not available')
+            logging.info(f'{sku} not available')
             return False
 
     def monitor_site(self, sku, monitor_delay):
         while self.check_product_availbility(sku) == False:
             time.sleep(monitor_delay)
-        logging.debug('Triggering alarm')
+        logging.info('Triggering alarm')
         self.wakeup_alarm()
 
     def wakeup_alarm(self):
@@ -47,7 +68,6 @@ class YeezySupplyMonitor:
 
 def main():
     monitor = YeezySupplyMonitor()
-    #monitor.monitor_site('x', 5)
 
 if __name__ == "__main__":
     main()
