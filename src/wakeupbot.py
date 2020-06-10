@@ -9,10 +9,12 @@ subprocess_list = []
 
 @bot.event
 async def on_ready():
+    # connection message
     print(f'{bot.user} has connected to Discord')
 
 @bot.command(name='add-monitor')
 async def add_monitor(ctx, product_sku: str):
+    # add a monitor process
     monitor_process = Popen(f'python -c "from yeezysupplymonitor import monitor_site; monitor_site(\\"{product_sku}\\", 5)"', shell=True)
     subprocess_list.append((product_sku, monitor_process))
     await ctx.channel.send(f'Now monitoring {product_sku}')
@@ -20,6 +22,7 @@ async def add_monitor(ctx, product_sku: str):
 
 @bot.command(name='remove-monitor')
 async def remove_monitor(ctx, product_sku: str):
+    # remove a monitor process
     for monitor in subprocess_list:
         if monitor[0] == product_sku:
             monitor[1].kill()
@@ -31,6 +34,7 @@ async def remove_monitor(ctx, product_sku: str):
 
 @bot.command(name='list-monitors')
 async def list_monitors(ctx):
+    # list monitors
     skus = ""
     for monitor in subprocess_list:
         skus += monitor[0]
