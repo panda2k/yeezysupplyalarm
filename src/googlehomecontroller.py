@@ -4,7 +4,8 @@ import spotify_token as st
 import spotipy
 import time
 
-CAST_NAME = 'Michaels room speaker'
+CAST_NAME = ''
+
 def play_music(song_uri):
     devices = pychromecast.get_chromecasts()
     speaker = next(cc for cc in devices if cc.device.friendly_name == CAST_NAME)
@@ -24,4 +25,6 @@ def play_music(song_uri):
             break
     speaker.set_volume(0.5)
     client.start_playback(device_id=device_id, uris=[song_uri])
+
+CAST_NAME = input("What is the name of your google home? ")
 
