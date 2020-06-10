@@ -25,7 +25,6 @@ def wakeup_alarm():
 
 def main():
     print(check_product_availbility('FY5158'))
-    #check_product('H67799')
 
 if __name__ == "__main__":
     main()
