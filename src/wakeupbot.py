@@ -2,10 +2,16 @@ import os
 import discord
 from discord.ext import commands
 from subprocess import Popen
+from yeezysupplymonitor import YeezySupplyMonitor
+import logging
+
+for key in logging.Logger.manager.loggerDict:
+    if key.find('discord') != -1 or key.find('websockets') != -1:
+        logging.getLogger(key).setLevel(logging.WARNING)   
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 bot = commands.Bot(command_prefix='!')
-subprocess_list = []
+threads = {}
 
 @bot.event
 async def on_ready():
@@ -14,30 +20,30 @@ async def on_ready():
 
 @bot.command(name='add-monitor')
 async def add_monitor(ctx, product_sku: str):
-    # add a monitor process
-    monitor_process = Popen(f'python -c "from yeezysupplymonitor import monitor_site; monitor_site(\\"{product_sku}\\", 5)"', shell=True)
-    subprocess_list.append((product_sku, monitor_process))
-    await ctx.channel.send(f'Now monitoring {product_sku}')
-
+    # create monitor thread
+    if product_sku in threads:
+        await ctx.channel.send(f'Already monitoring SKU {product_sku}')
+    else:
+        threads[product_sku] = YeezySupplyMonitor(product_sku, 60)
+        threads[product_sku].start()
+        await ctx.channel.send(f'Now monitoring {product_sku}')
 
 @bot.command(name='remove-monitor')
 async def remove_monitor(ctx, product_sku: str):
-    # remove a monitor process
-    for monitor in subprocess_list:
-        if monitor[0] == product_sku:
-            monitor[1].kill()
-            subprocess_list.remove(monitor)
-            await ctx.channel.send(f'Stopped monitoring {product_sku}')
-            return
-    await ctx.channel.send('There is no process monitoring SKU ' + product_sku)
+    # remove monitor thread
+    try:
+        threads[product_sku].stop()
+        await ctx.channel.send(f'Stopped monitoring SKU {product_sku}')
+    except KeyError as error:
+        await ctx.channel.send(f'There is no thread monitoring SKU {product_sku}')
     
 
 @bot.command(name='list-monitors')
 async def list_monitors(ctx):
     # list monitors
     skus = ""
-    for monitor in subprocess_list:
-        skus += monitor[0]
+    for key in threads.keys():
+        skus += key + ", "
     if len(skus) == 0:
         await ctx.channel.send('Not currently monitoring any SKUs')
     else:
